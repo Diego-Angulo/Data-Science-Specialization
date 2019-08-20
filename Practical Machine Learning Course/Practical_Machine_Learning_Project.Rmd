@@ -1,0 +1,239 @@
+---
+title: "Practical Machine Learning - Course Project"
+subtitle: 'Jhons Hopkins University - Data Science Specialization - Course #8'
+author: "Diego Angulo"
+date: "July 31, 2019"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Executive Summary**
+This report is a course project within the [Practical Machine Learning Course](https://www.coursera.org/learn/practical-machine-learning) on the [Data Science Specialization](https://www.coursera.org/specializations/jhu-data-science) by Johns Hopkins University on [Coursera](https://www.coursera.org/). 
+
+In this report, we are describing how a machine learning algorithm was built to predict the manner in which 6 participants did an exercise. Using cross validation, specifying what the expected out of sample error was, and why some choices were made. This prediction model was also used to predict 20 different test cases.
+
+##**Background**
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. <br/>
+
+One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. <br/>
+
+More information is available from the website here: [http://groupware.les.inf.puc-rio.br/har](http://groupware.les.inf.puc-rio.br/har) (see the section on the Weight Lifting Exercise Dataset).<br/>
+
+
+##**About the Data Set**
+ 
+ **A short extract from the web source:**<br/>
+Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes. 
+ 
+The data for this project come from this source: [http://groupware.les.inf.puc-rio.br/har](http://groupware.les.inf.puc-rio.br/har).
+ 
+**Data Authors:** <br/>
+Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
+ 
+Special thanks to the above mentioned for allowing their data to be used for academic purposes.
+
+##**Data Processing**
+**Setting the working directory and the required libraries.**
+
+```{r message=FALSE, warning=FALSE}
+ # Setting working directory first
+setwd("~/Coursera/8_Data_Science_Specialization/8 Practical Machine Learning/Week 4/Assignment")
+
+ # Removes all objects from the current workspace (R memory)
+rm(list=ls())                
+
+ # Libraries
+library(knitr)
+library(dplyr)
+library(rpart)
+library(rpart.plot)
+library(rattle)
+library(randomForest)
+library(corrplot)
+library(caret)
+
+library(RColorBrewer)
+library(gbm)
+
+ # Set seed to create reproducibility
+set.seed(12345)
+```
+
+**Loading the Data**
+```{r message=FALSE, warning=FALSE}
+TrainData <- read.csv(url("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"),header=TRUE)
+dim(TrainData)
+ValidData <- read.csv(url("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"),header=TRUE)
+dim(ValidData)
+str(TrainData)
+```
+
+
+**Data Cleaning**<br/>
+The training dataset has 19622 observations, and 160 variables. Some of them contains many NA's or empty values. <br/>
+In order to get a clean data, we will remove those columns that have at least 90% of this kind of observations. We can also get rid of the first variables, as they contain ID and timestamp information that is not necessary to build the model. 
+
+```{r message=FALSE, warning=FALSE}
+ # Removing NA's, empty values, and unnecesary variables in the Trainning dataset.
+EmptyCols <- which(colSums(is.na(TrainData) |TrainData=="")>0.9*dim(TrainData)[1]) 
+TrainDataClean <- TrainData[,-EmptyCols]
+TrainDataClean <- TrainDataClean[,-c(1:7)]
+dim(TrainDataClean)
+
+ # Removing NA's, empty values in the Test dataset.
+EmptyCols <- which(colSums(is.na(ValidData) |ValidData=="")>0.9*dim(ValidData)[1]) 
+ValidDataClean <- ValidData[,-EmptyCols]
+ValidDataClean <- ValidDataClean[,-1]
+dim(ValidDataClean)
+```
+
+**Low variation data exclusion** <br/>
+Some variables may not contain significant variation in their data. This condition makes them either useless for machine learning, since its presence does not indicate a certain class, or can even lead to overfitting.
+```{r message=FALSE, warning=FALSE}
+ # Low variation data exclusion from the TrainData Dataset
+NZV <- nearZeroVar(TrainDataClean)
+NZV
+```
+Acording to this, all the current variables report some variation. No more variables need to be removed from the training dataset.
+
+**Data Partitioning for prediction** <br/>
+Here, we prepare the data for prediction by splitting the training data into 70% as train data and 30% as test data. This splitting will serve to test the model accuracy.
+```{r message=FALSE, warning=FALSE}
+set.seed(12345) 
+inTrain <- createDataPartition(TrainDataClean$classe, p = 0.7, list = FALSE)
+TrainData <- TrainDataClean[inTrain, ]
+TestData <- TrainDataClean[-inTrain, ]
+dim(TrainData)
+```
+
+After cleaning, the new training data set has only 53 columns.<br/>
+The validation data `ValidDataClean` remains the same, as it will be used later to test the predictive model on the 20 cases.
+
+##**Exploratoy Data Analysis**
+We can take a look into our data and explore the correlations between all the variables before modeling.
+
+```{r message=FALSE, warning=FALSE, fig.height=11, fig.width=11}
+corMatrix <- cor(TrainData[, -53])
+corrplot(corMatrix, order = "FPC", method = "color", type = "lower", 
+         tl.cex = 0.8, tl.col = rgb(0, 0, 0),mar = c(1, 1, 1, 1), title = "Training Dataset Correlogram")
+```
+All the correlations have a darker tone of blue if it's closer to 1, and a darker tone of red when it's closer to -1, which means a stronger relationshipin in both cases.
+
+```{r}
+# Count the number of variables that are highly correlated with another one
+M <- abs(cor(TrainData[,-53])); diag(M) <- 0
+M <- which(M > 0.8, arr.ind = T)
+M <- dim(M)[1]
+M
+```
+There are `r M` pairs of highly correlated variables. In this cases, you could consider not to include some of these variables. In order to combine some variables to have a simpler model, you could also do a principal components analysis to reduce the model noice (due to averaging). <br/>
+For the sake of this academic project, we will not do any of these analysis to continue to the model buidling. 
+
+##**Building the Predictive Model**
+To predict the outcome, we will use three different methods to model the regression using the `TrainData` dataset:<br/>
+   - Random Forests<br/>
+   - Decision Trees<br/>
+   - Generalized Boosted Model<br/>
+Then, they will be applied to the `TestData` dataset to compare accuracies. The best model will be used to predict 20 different test cases to answer the quiz questions.
+
+##**Cross-Validation**
+In order to limit the effects of overfitting, and improve the efficicency of the models, we will use the **cross-validation** technique. Cross-validation is done for each model with K = 3. This is set in the above code chunk using the fitControl object as defined below:
+
+```{r}
+fitControl <- trainControl(method='cv', number = 3)
+```
+
+##**Decision Trees Model**
+```{r}
+# Decision Trees Model
+DT_Model <- train(classe~., data=TrainData, method="rpart", trControl=fitControl)
+#  Plot 
+fancyRpartPlot(DT_Model$finalModel)
+```
+
+**Now we validate the model on the `testData` to find out how well it performs by looking at the accuracy variable.**
+
+```{r}
+# Testing the model
+DT_Predict <- predict(DT_Model,newdata=TestData)
+DT_cm <- confusionMatrix(TestData$classe,DT_Predict)
+
+# Display confusion matrix and model accuracy
+DT_cm
+```
+
+```{r}
+# Model Acuracy
+DT_cm$overall[1]
+```
+Using **cross-validation** with three steps, the accuracy of this first model is about 0.496, which is very low. This means that the outcome class will not be predicted very well by the other predictors.
+
+##**Random Forests Model**
+```{r}
+# Random Forests Model
+RF_Model <- train(classe~., data=TrainData, method="rf", trControl=fitControl, verbose=FALSE)
+# Plot
+plot(RF_Model,main="RF Model Accuracy by number of predictors")
+```
+
+In this plot, we can notice that the model reaches the highest accuracy with two predictors. With more variables added to the model, the difference in the accuracy is not significant, but still lower. The fact that not all the accuracy is much worse with all the available predictors lets us suggest that there may be some dependencies between them.  
+
+**Now we validate the model on the `testData` to find out how well it performs by looking at the accuracy variable.**
+```{r}
+# Testing the model
+RF_Predict <- predict(RF_Model,newdata=TestData)
+RF_cm <- confusionMatrix(TestData$classe,RF_Predict)
+
+# Display confusion matrix and model accuracy
+RF_cm
+```
+
+```{r}
+# Model Acuracy
+RF_cm$overall[1]
+```
+Using **cross-validation** with three steps, the model accuracy is 0.989, which is very good.
+```{r}
+plot(RF_Model$finalModel,main="Model error of Random forest model by number of trees")
+```
+<br/> We can add to this analysis that using more than about 30 trees does not reduce the error significantly.
+
+##**Generalized Boosted Model**
+```{r}
+# Generalized Boosted Model
+GBM_Model <- train(classe~., data=TrainData, method="gbm", trControl=fitControl, verbose=FALSE)
+#  Plot 
+plot(GBM_Model)
+```
+
+**Now we validate the model on the `testData` to find out how well it performs by looking at the accuracy variable.**
+```{r}
+# Testing the model
+GBM_Predict <- predict(GBM_Model,newdata=TestData)
+GBM_cm <- confusionMatrix(TestData$classe,GBM_Predict)
+
+# Display confusion matrix and model accuracy
+GBM_cm
+```
+
+```{r}
+# Model Acuracy
+GBM_cm$overall[1]
+```
+Using **cross-validation** with three steps, the model accuracy is 0.957, which is very good.
+
+
+##**Applying the best model to the validation data**
+By comparing the accuracy rate values of the three models, it is clear that the 'Random Forest' model is the best one. So will use it to predict the values of classe for the validation data.
+
+```{r}
+# Model Validation 
+Prediction_Test <- predict(RF_Model,newdata=ValidDataClean)
+Prediction_Test
+```
