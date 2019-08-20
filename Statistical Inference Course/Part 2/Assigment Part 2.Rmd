@@ -1,0 +1,215 @@
+---
+title: "Statistical Inference - Course Assignment - Part 2"
+subtitle: 'Jhons Hopkins University - Data Science Specialization'
+author: "Diego Angulo"
+date: "July 5, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Executive Summary**
+This report is a course project within the [Statistical Inference Course](https://www.coursera.org/learn/statistical-inference) on the [Data Science Specialization](https://www.coursera.org/specializations/jhu-data-science) by Johns Hopkins University on [Coursera](https://www.coursera.org/). 
+
+The project consists of two parts:
+
+ - Part 1: A simulation exercise.
+ - Part 2: Basic inferential data analysis.
+
+## **Basic Inferential Data Analysis Instructions**
+
+We are going to analyze the ToothGrowth data in the R datasets package.
+
+1. Load the ToothGrowth data and perform some basic exploratory data analyses
+2. Provide a basic summary of the data.
+3. Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)
+4. State your conclusions and the assumptions needed for your conclusions.
+
+###**1. Load the ToothGrowth data and perform some basic exploratory data analyses**
+
+**About ToothGroth Dataset**
+
+The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, orange juice (coded as OJ) or ascorbic acid (a form of vitamin C and coded as VC).
+
+**Loading the Data**
+```{r}
+# Loading the data
+data(ToothGrowth)
+
+# Convert the variable dose from a numeric to a factor variable
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+
+# Display the data
+str(ToothGrowth)
+```
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+library(ggplot2)
+require(gridExtra)
+```
+
+**Basic exploratory data analyses**
+
+```{r, fig.align='center', fig.width=9}
+
+# Box Plotx
+plot1 <- ggplot(ToothGrowth, aes(x=dose, y=len)) + 
+      geom_boxplot(fill = "#ff5c82") + 
+     ggtitle("Tooth growth by dose (mg/day)") +
+     theme(axis.text = element_text(face="bold")) +
+     scale_x_discrete(name = "Dose") +
+     scale_y_continuous(name = "Tooth length",
+                              breaks = seq(0, 35, 5))
+
+plot2 <- qplot(supp, len, data = ToothGrowth, 
+      facets = ~dose, 
+      main = "Tooth growth by supplement and dose (mg/day)", 
+      xlab = "Supplement", 
+      ylab = "Tooth length") + 
+        geom_boxplot(aes(fill = supp)) +
+    theme(legend.position = "none") +
+    theme(axis.text = element_text(face="bold")) +
+    scale_y_continuous(breaks = seq(0,35,5)) +
+    scale_fill_manual(values= c("#fff68f", "#ffec06"))
+
+grid.arrange(plot1, plot2, ncol=2)
+```
+
+We can see that as the dose is increased, the length of the tooth also increases for both supplement types.<br/> Regarding the supplements, it seems like OJ is more efficient for 0.5 and 1 mg/day dose levels. Although, this is not so clear for the 2 mg/day dose. 
+
+###**2. Provide a basic summary of the data.**
+
+```{r}
+summary(ToothGrowth)
+```
+
+###**3. Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)**
+For this question, we will perform a Welch's t-test. Because we want to test the hypothesis that two populations have equal means. This is an adaptation of Student's t-test, and is more reliable when the two samples have unequal variances and/or unequal sample sizes.
+
+###**Testing influence on tooth growth according to supplement and dose:**
+
+####**Hypothesis 1 - Tooth Growth By Supplement and 0.5 mg/day Dose** 
+
+H0: (H0 = M1-M2 = 0) There is no difference in tooth growth given OJ or VC, for a 0.5 mg dose.  <br/>
+H1: (H1 = M1-M2 > 0) Tooth growth is bigger when usign OJ, than VC, for a 0.5 mg dose.  
+
+Where: <br/>
+M1 is the average of tooth growth length given the OJ supplement and 0.5 mg dose. <br/>
+M2 is the average of tooth growth length given the VC supplement and 0.5 mg dose.
+
+**Student's t-Test** 
+```{r}
+VC.length <- ToothGrowth$len[which(ToothGrowth$supp == "VC" & ToothGrowth$dose == 0.5)]
+OJ.length <- ToothGrowth$len[which(ToothGrowth$supp == "OJ" & ToothGrowth$dose == 0.5)]
+```
+
+```{r}
+t.test(OJ.length, VC.length, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+```
+
+At 5% significance level (1-conf.level), there is sufficient evidence to reject the Null Hypothesis (p-value < Significance level). For a 0.5 mg/day dose, the tooth growth is greater when OJ supplement is given.
+
+
+####**Hypothesis 2 - Tooth Growth By Supplement and 1 mg/day Dose** 
+
+H0: (H0 = M1-M2 = 0) There is no difference in tooth growth given OJ or VC, for a 1 mg dose.  <br/>
+H1: (H1 = M1-M2 > 0) Tooth growth is bigger when usign OJ, than VC, for a 1 mg dose.  
+
+Where: <br/>
+M1 is the average of tooth growth length given the OJ supplement and 1 mg dose. <br/>
+M2 is the average of tooth growth length given the VC supplement and 1 mg dose.
+
+**Student's t-Test** 
+```{r}
+VC.length <- ToothGrowth$len[which(ToothGrowth$supp == "VC" & ToothGrowth$dose == 1.0)]
+OJ.length <- ToothGrowth$len[which(ToothGrowth$supp == "OJ" & ToothGrowth$dose == 1.0)]
+```
+
+```{r}
+t.test(OJ.length, VC.length, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+```
+
+At 5% significance level (1-conf.level), there is sufficient evidence to reject the Null Hypothesis (p-value < Significance level). For a 1.0 Mg/day dose, the tooth growth is greater when OJ supplement is given.
+
+####**Hypothesis 3 - Tooth Growth By Supplement and 2 mg/day Dose** 
+
+H0: (H0 = M1-M2 = 0) There is no difference in tooth growth given OJ or VC, for a 2 mg dose.  <br/>
+H1: (H1 = M1-M2 > 0) Tooth growth is bigger when usign OJ, than VC, for a 2 mg dose.  
+
+Where: <br/>
+M1 is the average of tooth growth length given the OJ supplement and 1 mg dose. <br/>
+M2 is the average of tooth growth length given the VC supplement and 1 mg dose.
+
+**Student's t-Test** 
+```{r}
+VC.length <- ToothGrowth$len[which(ToothGrowth$supp == "VC" & ToothGrowth$dose == 2.0)]
+OJ.length <- ToothGrowth$len[which(ToothGrowth$supp == "OJ" & ToothGrowth$dose == 2.0)]
+```
+
+```{r}
+t.test(OJ.length, VC.length, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+```
+
+At 5% significance level (1-conf.level), we fail to reject the Null Hypothesis (p-value > Significance level). For a 2.0 mg/day dose, the tooth growth is the same when OJ or VC supplements are given.
+
+
+###**Testing the impact of different doses**
+
+####**Hypothesis 4 - Tooth Growth By dose 0.5 and 1 mg/day**
+H0: Null hypothesis, there is no difference in tooth growth given 0.5 or 1 mg/day dose. (H0 = M0-M1 = 0)<br/>
+H1: Alternative hypothesis, tooth growth is bigger when usign 1 mg/day dose, than 0.5. (H1 = M0-M1 > 0)
+
+Where: <br/>
+M0 is the average of tooth growth length for a dose of 0.5 mg/day. <br/>
+M1 is the average of tooth growth length for a dose of 1 mg/day.
+
+**Student's t-Test** <br/>
+Now we will perform the t-test using the two tooth length vectors dose_0.5 and dose_1.
+
+```{r}
+dose_0.5 <- ToothGrowth$len[ToothGrowth$dose == "0.5"]
+dose_1   <- ToothGrowth$len[ToothGrowth$dose == "1"]
+```
+
+```{r}
+t.test(dose_0.5, dose_1, 
+       alternative = "less", # is the alterntavie that dose_0.5 has a smaller mean than dose_1 (which should be true, looking at the graphics before)
+       paired = FALSE, # the data point are not paired with each other
+       var.equal = FALSE, # the variances are not equal
+       conf.level = 0.95)
+```
+
+At 5% significance level (1-conf.level), there is sufficient evidence to reject the Null Hypothesis. The tooth growth is greater when a 1 mg/day dose is given instead of a 0.5 mg/day dose.
+
+####**Hypothesis 5 - Tooth Growth By dose 1 and 2 mg/day**
+H0: Null hypothesis, there is no difference in tooth growth given 1 or 2 mg/day dose. (H0 = M0-M1 = 0) <br/>
+H1: Alternative hypothesis, tooth growth is bigger when usign 2 mg/day dose, than 1.  (H1 = M0-M1 > 0)
+
+Where: <br/>
+M0 is the average of tooth growth length for a dose of 1 mg/day. <br/>
+M1 is the average of tooth growth length for a dose of 2 mg/day.
+
+**Student's t-Test** <br/>
+Now we will perform the t-test using the two tooth length vectors dose_1 and dose_2.
+
+```{r}
+dose_1   <- ToothGrowth$len[ToothGrowth$dose == "1"]
+dose_2   <- ToothGrowth$len[ToothGrowth$dose == "2"]
+```
+
+```{r}
+t.test(dose_1, dose_2, 
+       alternative = "less", # is the alterntavie that dose_1 has a smaller mean than dose_2 (here as well: which should be true, looking at the graphics before)
+       paired = FALSE, # the data point are not paired with each other
+       var.equal = FALSE, # the variances are not equal
+       conf.level = 0.95)
+```
+
+At 5% significance level (1-conf.level), there is sufficient evidence to reject the Null Hypothesis. The tooth growth is greater when a 2 mg/day dose is given instead of 1 mg/day dose.
+
+###**4. State your conclusions and the assumptions needed for your conclusions.**
+After running the hypothesis tests, based on the Tooth Growth sample, we can confirm the following:
+
+- As the dose is increased, the length of the tooth also increases for both supplement types.
+- OJ supplement is more efficient than VC, for 0.5 and 1.0 mg/day dose. Except for a 2.0 dose where the supplement type doesn't make any difference.
