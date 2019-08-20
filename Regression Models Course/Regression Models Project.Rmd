@@ -1,0 +1,243 @@
+---
+title: "Regression Models Course - Final Project"
+subtitle: 'Jhons Hopkins University - Data Science Specialization - Course #7'
+author: "Diego Angulo"
+date: "July 16, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Executive Summary**
+This report is a course project within the [Regression Models course](https://www.coursera.org/learn/regression-models) on the [Data Science Specialization](https://www.coursera.org/specializations/jhu-data-science) by Johns Hopkins University on [Coursera](https://www.coursera.org/). 
+
+In this report, we are using the `mtcars` data set (located in the `reshape2` package), to study the relationship between a car's transmission and the number of miles per gallon of gasoline, along with a set of other variables that could affect this relationship.
+
+##**Project instructions**
+You work for Motor Trend, a magazine about the automobile industry. Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:
+
+ - Is an automatic or manual transmission better for MPG <br/>
+ - Quantify the MPG difference between automatic and manual transmissions
+ 
+##**About the data set**
+The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973-74 models).
+
+A data frame with 32 observations on 11 (numeric) variables.
+
+ - 	 mpg	 Miles/(US) gallon
+ - 	 cyl	 Number of cylinders
+ - 	 disp	 Displacement (cu.in.)
+ - 	 hp	     Gross horsepower
+ - 	 drat	 Rear axle ratio
+ - 	 wt	     Weight (1000 lbs)
+ -	 qsec	 1/4 mile time
+ - 	 vs	     Engine (0 = V-shaped, 1 = straight)
+ - 	 am	     Transmission (0 = automatic, 1 = manual)
+ - 	 gear	 Number of forward gears
+ - 	 carb	 Number of carburetors
+ 
+##**Data Processing**
+
+Setting the working directory, loading the data and the required libraries.
+```{r message=FALSE, warning=FALSE, paged.print=TRUE}
+ # Setting working directory first
+setwd("~/Coursera/8_Data_Science_Specialization/7 Regression Models/Week 4/Assignment")
+
+ # Loading Libraries
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(dplyr)
+
+ # Loading Data
+data(mtcars)
+```
+
+```{r echo=FALSE}
+# Converting from numeric to factor, all level-relevant variables
+Data_Cars <- mtcars
+Data_Cars$cyl <- factor(Data_Cars$cyl)
+Data_Cars$vs <- factor(Data_Cars$vs)
+Data_Cars$am <- factor(Data_Cars$am,labels=c('Automatic','Manual'))
+Data_Cars$gear <- factor(Data_Cars$gear)
+Data_Cars$carb <- factor(Data_Cars$carb)
+```
+
+Let's take a look at the first rows of our data set.
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+kable(head(mtcars)) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
+```
+
+##**Exploratory Data Analysis**
+ - 	 To answer this project's questions, we will use linear models to quantify the relationship between `MPG` variable, and the rest. And we will look for the best model fit in the subsequent regression analysis section.
+ 
+ - 	 Taking a look at how the MPG variable of interest is distributed (Figure 1 in the appendix), we can see that it kind of fits a normal distribution. The lack of precission for this comparison can be due to the small sample size of only 32 observations. Anyways, multiple linear regression assumes that the residuals are normally distributed, so we will check this assumption once we have the best model fit for this project. 
+ 
+ - 	 To know which transmission type is better for fuel consumption, we first plot boxplots of the variable `MPG` when `am` is Automatic or Manual (see Figure 2 in the appendix). And we can clearly notice an increase in the `MPG` when the transmission is Manual.
+
+ - 	 We can take a look into our data and explore the relationships between all the variables (Firgure 3 in the appendix). Our outcome variable, miles per gallon seems to have a relationship with some other variables like `cyl`, `disp`, `hp`, `drat`, `wt`, `vs` and `am`. <br/>
+
+ - 	 These relationships are easier to notice by looking at the correlogram (Firgure 4 in the appendix). All the correlations have a darker tone of blue if it's closer to 1, and a darker tone of red when it's closer to -1, which means a stronger relationship. 
+
+ - 	 Besides our interest in the outcome variable, we can also have an idea whether or not to consider the combination of certain variables for a linear model depending on their correlation. This is because one variable could be explaining another one, e.g. Weigh (`wt`) vs Displacement (`disp`) sharing a correlation of 0.89. We migh explain this relationship because a heavy vehicle simply needs more power than a smaller one to produce comparable acceleration and load-hauling capacity. And that's usually achieved by a larger-displacement engine.   
+
+##**Regression Analysis**
+In this section, we will try to find the best model fit to explain the relationship between the set of variables and miles per gallon (`MPG`) through a variable selection procedure called stepwise regression. This is a method that consists on fitting regression models in which the choice of predictive variables is carried out by an automatic procedure. In each step, a variable is considered for addition to or subtraction from the set of explanatory variables based on some prespecified criterion. Usually, this takes the form of a sequence of F-tests or t-tests, but other techniques are possible, such as adjusted R2, Akaike information criterion, Bayesian information criterion, Mallows's Cp, PRESS, or false discovery rate.
+
+Stepwise Regression and similar selection methods might not be the best for regression analysis [[1](https://www.lexjansen.com/pnwsug/2008/DavidCassell-StoppingStepwise.pdf)], [[2](http://assodiaf.org/en/how-bad-is-stepwise-regression/)], but for the sake of this academic project, we will run this procedure. 
+
+##**Model Selection**
+We will start our selection using a component of the stepwise regression technique called Backward Elimination. Where each variable is considered for subtraction from the set of explanatory variables, based on the prespecified Akaike information criterion according to the R function `step`.
+
+&nbsp;.
+
+####**Base Model**
+Let's start fitting a model with all the variables.
+```{r}
+# Fitting a base model that contains all the explanatory variables
+Fit_Base = lm(mpg ~ ., data = mtcars)
+
+# We can check the models formula in case it's needed.
+formula(Fit_Base)
+
+# Summary
+summary(Fit_Base)
+```
+
+With this first model, we can basically say that none of the variables are significant. This can be due to multicollinearity (as mentioned in the Weigh (`wt`) vs Displacement (`disp`) example in the Exploratory Analysis section), and the lack of simplicity of the model (parsimony principle). 
+
+&nbsp;.
+
+####**Backward Elimination Procedure** <br/>
+We will use the R funcion `step()` to look for the best model, starting from our `Fit_Base` model that has all the variables already fitted. As we just mentioned, this function use Akaike information criterion for the selection of variables for substraction. The lower the **AIC**, the better fit we will have. I.e., one by one, variables are going to get removed. 
+
+```{r}
+# Running the Backward Elimination Procedure
+Fit_Best <- step(Fit_Base, direction = "backward")
+```
+
+As we can see, the **AIC** of the model decreases every time we remove a suggested variable. The Backward Elimination Procedure stops when there are no more variables to remove (<none> AIC = 61.307). And removing one more variable would result in a higher **AIC**.
+
+&nbsp;.
+
+####**Best Model Fit**
+This is how our best model fit looks like
+```{r}
+# Model Summary
+summary(Fit_Best)
+# Confidence Intervals
+confint(Fit_Best)
+```
+
+&nbsp;.
+
+####**Best Model Analysis:**
+ - 	 According to the R-squared value, our best model fit explains 84% of the variability in `MPG` outcome with the regressors weight `wt`, 1/4 mile time `qsec`, and transmission `am`.
+ - 	 The Adjusted R-squared is 83%, which is close to the R-squared value. This means that if we had unnecessary variables in our model, the difference between this two would be substantial.
+ - 	 We can see that all the p-values of the coefficients are smaller than 0.05 of significance. Which means that all the regressors are statistically significant, except the intercept.
+ - 	 The previous statement can be reinforced by the confidence intervals of the coefficients by not containing 0. Hence, these control variables have a statistically significant effect on the outcome. 
+ - 	 The model as a whole is significant to explain the `MPG` outcome, as the P-value for the regression is 1.2104*e-11, which is smaller than the significance level 0.05. 
+ - 	 When the transmission `am` variable is 0 (automatic), the intercept of the model is 9.6178 (coefficient of the reference variable). But when is equal to 1 (manual) the intercept of the model is 9.6178 + 2.9358 (coefficient of the reference variable + the coefficient of the manual transmission variable).
+ - 	 The t-test for the transmission `am` variable when is equal to 1 (manual), suggests that this variable is significantly different compared to when is equal to cero (automatic). **We can then say that manual transmission has on average 30.53% (2.9358 units) more miles per gallon compared to automatic transmission.**
+ - 	 Holding 1/4 mile time `qsec` and  Transmission `am` constant, as the weight of the car increases by 1 unit (1000 lbs), the miles per gallon, on an average, decreases by -3.9165 miles per gallon. 
+ -   Holding Weight `wt` and  Transmission `am` constant, as the 1/4 mile time increases by 1 unit (1 second), the miles per gallon, on an average, increases by 1.2259 miles per gallon.
+
+&nbsp;.
+
+####**Testing the hypothesis that two populations have equal means.**
+Assuming that the data of Miles per Gallon for Automatic and Manual cars are normally distributed, we can test the hypothesis that the two population of cars have equal means. 
+
+H0: (H0 = M1-M2 = 0) There is no difference in miles per gallon given Automatic or Manual transmission. <br/>
+H1: (H1 = M1-M2 > 0) Miles per gallon are higher when the cars have manual transmission.
+
+Where: <br/>
+M1 is the average Miles per gallon for manual cars. <br/>
+M2 is the average Miles per gallon for automatic cars.
+
+```{r}
+# Running the Backward Elimination Procedure
+t.test(mpg ~ am, data = mtcars, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+```
+
+At 5% significance level, there is sufficient evidence to reject the Null Hypothesis (p-value < Significance level). For cars with manual transmission, the miles per gallon are higher.
+
+##**Residual Analysis**
+**Consult Figure 5 in the appendix for this analysis.** <br/>
+ - 	 The points in the Residuals vs. Fitted plot seem to be randomly scattered, verifying the assumption of the homoscedasticity of errors. <br/>
+ - 	 The Normal Q-Q plot consists of the points which mostly fall on the line indicating that the residuals are normally distributed. <br/>
+ - 	 The scale location plot confirms the constant variance assumption, as the points are randomly distributed. <br/>
+ - 	 Cook's distances are less than 1, D<1. This means that our observations are not highly influential. 
+
+##**Conclusion**
+**Based on the observations from our best model fit, we can conclude the following:** <br/>
+ - 	 Our best model fit explains 84% of the variability in `MPG` outcome, with the regressors weight `wt`, 1/4 mile time `qsec`, and transmission `am`. <br/>
+ - 	 Manual transmission has on average 30.53% (2.9358 units) more miles per gallon compared to automatic transmission. <br/>
+  -  Holding 1/4 mile time `qsec` and  Transmission `am` constant, as the weight of the car increases by 1 unit (1000 lbs), the miles per gallon, on an average, decreases by -3.9165 miles per gallon. <br/>
+ -   Holding Weight `wt` and  Transmission `am` constant, as the 1/4 mile time increases by 1 unit (1 second), the miles per gallon, on an average, increases by 1.2259 miles per gallon.
+
+##**Appendix**
+```{r echo=FALSE, fig.align='center', fig.height=5, fig.width=12, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Chat Grid
+par(mfrow = c(1,2))
+
+# HISTOGRAM
+hist(Data_Cars$mpg,  
+     main = "Figure 1 - Distribution of the MPG Variable", breaks = 5,
+     prob=T, xlab = "Miles/(US) gallon", ylab = "Density", col = "khaki1")
+
+xfit <- seq(min(Data_Cars$mpg),max(Data_Cars$mpg),length=40)
+yfit <- dnorm(xfit, mean=mean(Data_Cars$mpg),sd=sd(Data_Cars$mpg))
+lines(xfit,yfit,lty = 1, lwd = 2, col = "black")
+legend(27, 0.05, lty = 1, lwd = 2, col = "black", legend = "Norm. Dist. Simulation", cex = 0.6)
+
+#BOXPLOT
+boxplot(mpg ~ am, data = Data_Cars, xlab = "Transmission",
+   ylab = "Miles/(US) gallon", main = "Figure 2 - MPG vs Transmission Boxplot", col = "#fff68f")
+```
+
+```{r echo=FALSE, fig.align='center', fig.height=8, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+panel.lm <- function (x, y,  pch = par("pch"), col.lm = "blue",  ...) {   
+  ymin <- min(y)
+  ymax <- max(y)
+  xmin <- min(x)
+  xmax <- max(x)
+  ylim <- c(min(ymin,xmin),max(ymax,xmax))
+  xlim <- ylim
+  points(x, y, pch = pch,ylim = ylim, xlim= xlim,...)
+  ok <- is.finite(x) & is.finite(y)
+  if (any(ok)) 
+    abline(lm(y[ok]~ x[ok]), 
+           col = col.lm, ...)
+}
+
+panel.cor <- function(x, y, ...) {
+    par(usr = c(0, 1, 0, 1))
+    txt <- as.character(format(cor(x, y), digits=2))
+    text(0.5, 0.5, txt)
+}
+
+pairs(mpg ~ ., data = mtcars,
+      col = "blue",
+      labels = c("MPG","Cylinders","Displacement","Horsepower","Rear Axle Ratio","Weight","qsec","Engine","Transmission","Gears","Carburetors"),
+      pch = 20,
+      main = "Figure 3 - Scatter Plot Matrix & Correlations For MTCARS Dataset",
+      upper.panel = panel.cor,
+      panel=panel.lm) 
+```
+
+```{r echo=FALSE, fig.align='center', fig.height=5, fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(corrplot)
+Cor_Matrix <- cor(mtcars)
+corrplot.mixed(Cor_Matrix, mar = c(1, 1, 1, 1), title = "Figure 4 - MTCARS Dataset Correlogram")
+```
+
+```{r echo=FALSE, fig.align='center', fig.height=8, message=FALSE, warning=FALSE, paged.print=FALSE}
+par(mfrow=c(2,2),oma=c(6,2,6,2),mar=c(4,4,2,2))
+plot(Fit_Best,1:4);title(main="Figure 5 - Residuals For the Regression Model",outer=T,cex.main=2,cex.sub=2)
+```
+
+
+
