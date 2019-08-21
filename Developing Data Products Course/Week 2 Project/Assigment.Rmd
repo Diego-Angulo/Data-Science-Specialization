@@ -1,0 +1,99 @@
+---
+title: "Developing Data Products - Week 2 Assignment - R Markdown and Leaflet"
+subtitle: 'Jhons Hopkins University - Data Science Specialization'
+author: "Diego Angulo"
+date: "August 9, 2019"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Synopsis**
+For this assigmnent, we are going to use Leaflet function to map all the crime incidents that involved gun use in the City of Los Angeles in 2013.
+
+## **R Markdown and Leaflet Assignment Instructions**
+Create a web page using R Markdown that features a map created with Leaflet.<br/>
+Host your webpage on either GitHub Pages, RPubs, or NeoCities.<br/>
+Your webpage must contain the date that you created the document, and it must contain a map created with Leaflet.
+
+##**About the data set**
+This dataset is obtained from [DATA.GOV - The home of the U.S. Government's open data](https://www.data.gov/). This dataset reflects incidents of crime in the City of Los Angeles dating back to 2010. This data is transcribed from original crime reports that are typed on paper and therefore there may be some inaccuracies within the data. Some location fields with missing data are noted as (0°, 0°). Address fields are only provided to the nearest hundred block in order to maintain privacy. This data is as accurate as the data in the database.
+
+## **Data Processing**
+**1- Libraries**
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(leaflet)
+```
+
+**2-Downloading the raw data.**
+```{r}
+# Setting working directory first
+setwd("~/Coursera/8_Data_Science_Specialization/9 Developing Data Products/Week 2/Assignment")
+
+# Downloading the .csv data file
+if(!file.exists("Crime_Data_from_2010_to_Present.csv")) {
+    download.file("https://data.lacity.org/api/views/63jg-8b9z/rows.csv?accessType=DOWNLOAD", 
+                  destfile = "Crime_Data_from_2010_to_Present.csv", 
+                  method = "curl")}
+
+# Loading the Data
+A_1_Crime_Data <- read.csv("Crime_Data_from_2010_to_Present.csv") 
+```
+
+**3-Cleaning the data.**<br/>
+We are filtering all the crimes occurred only in 2013. To get the crimes that involved gun use, we are filtering the weapon's description by all the words related with guns (excluding "Toy guns" and "Simulated guns"). And last, we are keeping only the important columns required for the Leaftlet function (Latitude and Longitude).
+
+```{r}
+# Formating longitude and latitude variables
+names(A_1_Crime_Data)[27]<-"lat" ; names(A_1_Crime_Data)[28]<-"lng"
+
+# Filtering crimes ocurred only in  2013
+A_1_Crime_Data$DATE.OCC <- as.Date(A_1_Crime_Data$DATE.OCC, format = "%m/%d/%Y")
+A_1_Crime_Data <- A_1_Crime_Data %>% filter(DATE.OCC > as.Date("2012-12-31"))
+
+# Filtering crimes committed with guns
+A_2_Crime_Data <-
+      A_1_Crime_Data %>%
+    filter(grepl("gun|weapon|pistol|firearm|revolver|simulated gun|shotgun|rifle", Weapon.Desc,ignore.case = TRUE),              !grepl("toy|simulated", Weapon.Desc, ignore.case = TRUE), 
+             !is.na(Weapon.Used.Cd),
+             DR_NO != 152118665 # This is an excluded case with wrong lat and lng.   
+             ) %>%
+    select(DR_NO, lat, lng)
+
+dim(A_2_Crime_Data)
+```
+
+As we can see, there are 7017 committed crimes. Now, let's take a look at the most frequent crimes by weapon description.
+```{r echo=FALSE}
+# Table of most common crimes with guns
+A_3_Crime_Data <-
+      A_1_Crime_Data %>%
+      group_by(Weapon.Used.Cd, Weapon.Desc) %>%
+      summarize(count = n()
+      ) %>%
+      filter(grepl("gun|weapon|pistol|firearm|revolver|simulated gun|shotgun|rifle", Weapon.Desc,ignore.case = TRUE),              !grepl("toy|simulated", Weapon.Desc, ignore.case = TRUE), 
+             !is.na(Weapon.Used.Cd)
+             ) %>%
+      arrange(desc(count))
+
+kable(head(A_3_Crime_Data)) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
+```
+
+## **Leaflet function map**
+Using the clustering tool to map all the crimes in the city, as you zoom-in an click the location of the crime (red spots) and click, the case number is displayed.
+
+```{r message=FALSE, warning=FALSE, fig.align='center'}
+#Cluster
+A_2_Crime_Data %>% leaflet() %>% addTiles() %>% 
+    addMarkers(popup = paste("Case #:", A_2_Crime_Data$DR_NO,sep=" "),
+               clusterOptions=markerClusterOptions())
+```
+
