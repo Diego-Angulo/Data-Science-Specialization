@@ -19,4 +19,5 @@ There are 10 Courses in this Specialization:
 Allthough, this is a ten-course specialization. I did not upload any files from the first 4 courses because their projects are
 just an introduction to the further courses. 
 
-All my projects are also uploaded in Rpubs. You can find them here: https://rpubs.com/diegolas
+All my final projects are also uploaded in Rpubs. You can find them here: https://rpubs.com/diegolas
+The final project of the ninth course is a ShinyApp. You can also find it here: https://diegoangulo.shinyapps.io/regressionapp/
