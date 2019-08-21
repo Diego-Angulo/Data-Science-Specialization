@@ -1,0 +1,40 @@
+Regression App
+========================================================
+author: Diego Angulo
+date: 8/19/2019
+transition: rotate
+
+<small>
+Coursera <br/>
+Developing Data Products Course - #9 <br/>
+Johns Hopkins University - Data Science Specialization
+</small>
+
+Summary
+========================================================
+This presentation is the final course project within the [Developing Data Products Course](https://www.coursera.org/learn/data-products) on the [Data Science Specialization](https://www.coursera.org/specializations/jhu-data-science) by Johns Hopkins University on [Coursera](https://www.coursera.org/). 
+
+Using the `mtcars` data set included in R, we creating a data product that displays a linear regression model. The product function predicts the value of the outcome "Number of Miles Per Gallon of Gasoline" of a car, with the most relevant independent variables found in the data set.
+
+The Application includes the following:
+========================================================
+- Form of Input used: 
+    - Radio Button
+    - Slider    
+
+- Reactive output displayed as a result of server calculations
+
+- The server.R and ui.R codes are posted on github at: <https://github.com/Diego-Angulo/Data-Science-Specialization--Developing-Data-Products/tree/master/Week%204%20-%20Assignment>
+
+- The App can be found at: <https://diegoangulo.shinyapps.io/regressionapp/>
+
+Part of the Data used:
+========================================================
+```{r}
+head(mtcars, n = 5)
+```
+
+App layout:
+========================================================
+![App](app.png)
+
