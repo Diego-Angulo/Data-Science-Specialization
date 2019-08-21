@@ -77,7 +77,7 @@ str(TrainData)
 
 **Data Cleaning**<br/>
 The training dataset has 19622 observations, and 160 variables. Some of them contains many NA's or empty values. <br/>
-In order to get a clean data, we will remove those columns that have at least 90% of this kind of observations. We can also get rid of the first variables, as they contain ID and timestamp information that is not necessary to build the model. 
+In order to get a clean data, we will remove those columns that have at least 90% of this kind of observations. We can also get rid of the first variables, as they contain ID and timestamp information that are not necessary to build the model. 
 
 ```{r message=FALSE, warning=FALSE}
  # Removing NA's, empty values, and unnecesary variables in the Trainning dataset.
@@ -172,7 +172,7 @@ DT_cm
 # Model Acuracy
 DT_cm$overall[1]
 ```
-Using **cross-validation** with three steps, the accuracy of this first model is about 0.496, which is very low. This means that the outcome class will not be predicted very well by the other predictors.
+Using **cross-validation** with three steps, the accuracy of this first model is about 0.496, therefore the out-of-sample-error is 0.5, which is high. This means that the outcome class will not be predicted very well by the other predictors.
 
 ##**Random Forests Model**
 ```{r}
@@ -198,7 +198,7 @@ RF_cm
 # Model Acuracy
 RF_cm$overall[1]
 ```
-Using **cross-validation** with three steps, the model accuracy is 0.989, which is very good.
+Using **cross-validation** with three steps, the model accuracy is 0.989. Therefore the out-of-sample-error is 0.011, which is very good.
 ```{r}
 plot(RF_Model$finalModel,main="Model error of Random forest model by number of trees")
 ```
@@ -226,7 +226,7 @@ GBM_cm
 # Model Acuracy
 GBM_cm$overall[1]
 ```
-Using **cross-validation** with three steps, the model accuracy is 0.957, which is very good.
+Using **cross-validation** with three steps, the model accuracy is 0.957, and the out-of-sample-error is 0.043 which is good.
 
 
 ##**Applying the best model to the validation data**
