@@ -20,4 +20,5 @@ Although, this is a ten-course specialization. I did not upload any files from t
 just an introduction to the further courses. 
 
 All my final projects are also uploaded in Rpubs. You can find them here: https://rpubs.com/diegolas <br/>
+
 The final project of the ninth course is a ShinyApp. You can also find it here: https://diegoangulo.shinyapps.io/regressionapp/
