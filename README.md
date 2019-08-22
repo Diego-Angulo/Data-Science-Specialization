@@ -1,7 +1,7 @@
 # Data Science Specialization
 **Jhons Hopkins University - On Coursera**
 
-This repository contains my **R Markdown** files from the course projects from the Johns Hopkins University Data Science Specialization on Coursera.
+This repository contains my **R Markdown** files related to the course projects from the Johns Hopkins University Data Science Specialization on Coursera.
 
 ## **About this specialization:**
 
