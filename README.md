@@ -5,7 +5,7 @@ This repository contains all of my project's files from the Jhons Hopkins Univer
 
 ## **About this specialization:**
 
-This Specialization covers the concepts and tools you need throughout the entire data science pipeline, from asking the right kinds of questions to making inferences and publishing results. At completion, students have a portfolio demonstrating their mastery of the material.
+This Specialization covers the concepts and tools needed throughout the entire data science pipeline, from asking the right kinds of questions to making inferences and publishing results. At completion, students have a portfolio demonstrating their mastery of the material.
 
 **There are 10 Courses in this Specialization:**
 
