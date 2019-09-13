@@ -20,7 +20,7 @@ This Specialization covers the concepts and tools needed throughout the entire d
 9.  Developing Data Products
 10. Data Science Capstone
 
-Although, this is a ten-course specialization. I did not upload any files from the first 4 courses because their projects are
+Although, this is a ten-course specialization. I did not upload any files from the first 4 courses because those projects are
 just an introduction to the further courses. 
 
 ## Additional Links
