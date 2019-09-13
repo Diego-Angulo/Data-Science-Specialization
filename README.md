@@ -5,7 +5,7 @@ This repository contains my **R Markdown** files related to the course projects 
 
 ## **About this specialization:**
 
-This Specialization covers the concepts and tools needed throughout the entire data science pipeline, from asking the right kinds of questions to making inferences and publishing results. At completion, students have a portfolio demonstrating their mastery of the material.
+This Specialization covers the concepts and tools needed throughout the entire data science pipeline, from asking the right kinds of questions to making inferences and publishing results. 
 
 **There are 10 Courses in this Specialization:**
 
